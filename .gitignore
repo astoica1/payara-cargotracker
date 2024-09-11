@@ -1,14 +1,17 @@
-# Maven output
-target/
-
-# Project related files
-.project
-.classpath
+target
 .settings
-
-# NetBeans
-nbactions.xml
-nb-*.xml
-
-# VSCode
+.metadata
+.factorypath
+.classpath
+.project
+*.iml
+.idea/
 .vscode/
+nb-*
+bin/
+*.log
+*.log-*
+data
+.DS_Store
+cargo-tracker-test-data
+nbactions.xml
