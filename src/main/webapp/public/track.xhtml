@@ -1,61 +1,106 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
-    <ui:composition template="/WEB-INF/templates/common/public.xhtml">
-        <ui:define name="title">Track Cargo</ui:define>
-        <ui:define name="content">
-            <script src="http://maps.google.com/maps/api/js?sensor=false" type="text/javascript"></script>
-            <div class="ui-grid ui-grid-responsive">
-                <div class="ui-grid-row">
-                    <div class="ui-grid-col-2" id="leftCol"></div>
-                    <div class="ui-grid-col-8" id="mainCol">
-                        <br/>
-                        <h:form id="trackingForm">
-                            <p:outputLabel value="Tracking ID  " />
-                            <p:autoComplete id="trackingId" value="#{track.trackingId}" required="true" forceSelection="true" completeMethod="#{track.getTrackingIds}" />
-                            <p:commandButton id="trackEnthusiasm" value="Track!" actionListener="#{track.onTrackById}" ajax="false"/>
-                        </h:form>
-                        <br/>
-                        <h:panelGroup id="trackingData" rendered="#{not empty track.cargo}">
-                            <div id="result">
-                                <p id="currentLocation" >Cargo <strong>#{track.cargo.trackingId}</strong> is currently <strong>#{track.cargo.statusText}</strong></p>
-                                <p>Estimated time of arrival in <strong>#{track.cargo.destination}</strong>: #{track.cargo.eta}</p>
-                                <f:facet name="nextActivity" rendered="#{track.cargo.nextExpectedActivity}"><p>.#{track.cargo.nextExpectedActivity}.</p></f:facet>
-                                <h:panelGroup rendered="#{track.cargo.misdirected}">
-                                    <p><i class="fa fa-exclamation-triangle" style="color: #9b2332"></i> Cargo is misdirected.</p>
-                                </h:panelGroup>
-                                <h:panelGroup rendered="#{not empty track.cargo.events}">
-                                    <strong>Handling History</strong><br/>
-                                    <ui:repeat value="#{track.cargo.events}" var="leg">
-                                        <ui:fragment rendered="#{leg.expected}">
-                                            &#160;&#160;<i class="fa fa-check" style="color: green"/>&#160;#{leg.description}<br/>
-                                        </ui:fragment>
-                                        <ui:fragment rendered="#{!leg.expected}">
-                                            &#160;&#160;<i class="fa fa-flag" style="color: #9b2332"/>&#160;#{leg.description}<br/>
-                                        </ui:fragment>
-                                    </ui:repeat>
-                                </h:panelGroup>
-                            </div>
-                        </h:panelGroup>
-                    </div>
-                    <div class="ui-grid-col-2" id="rightCol" style="background-color: white;background:0;"></div>
-                </div>
-                <div class="ui-grid-row">
-                    <div class="ui-grid-col-2" id="leftCol2"></div>
-                    <div class="ui-grid-col-8" id="mainCol2">
-                        <br/>
-                        <h:panelGroup rendered="#{not empty track.cargo}">
-                            <p:gmap center="#{track.cargo.destinationCoordinates}" fitBounds="true" zoom="2" model="#{track.cargo.mapModel}" type="PLAN"  style="width:620px;height:360px;">
-                            </p:gmap>
-                        </h:panelGroup>
-                        <p:separator />
-                        <a href="#{request.contextPath}"><i class="fa fa-arrow-left fa-lg" style="color: #999999;"></i></a>
-                    </div>
-                    <div class="ui-grid-col-1" id="rightCol2"></div>
-                </div>
+  xmlns:h="http://xmlns.jcp.org/jsf/html"
+  xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+  xmlns:p="http://primefaces.org/ui" xmlns:f="http://java.sun.com/jsf/core">
+<ui:composition template="/WEB-INF/templates/common/public.xhtml">
+  <ui:define name="title">Track Cargo</ui:define>
+  <ui:define name="content">
+    <div class="ui-grid-col-2" id="leftCol"></div>
+    <div class="ui-grid-col-8" id="container" style="display: none">
+      <br />
+      <div class="ui-g ui-g-12">
+        <div class="ui-g-6 ui-g-offset-3">
+          <h:form id="trackingForm">
+            <h:panelGrid columns="3" cellpadding="15">
+              <p>Enter your tracking ID:</p>
+              <p:inputText id="trackingIdInput"
+                value="#{public.track.trackingId}" required="true"
+                placeholder="XYZ789" title="Valid tracking ID" />
+              <h:commandButton value="Track!"
+                action="#{public.track.onTrackById()}">
+                <f:ajax execute="trackingIdInput" render="cargo-status" />
+              </h:commandButton>
+            </h:panelGrid>
+          </h:form>
+        </div>
+      </div>
+      <div class="ui-g-12">
+        <p:separator />
+      </div>
+      <h:panelGroup id="cargo-status">
+        <div class="ui-g-12">
+          <h:panelGroup rendered="#{not empty public.track.cargo}">
+            <div id="result">
+              <p>
+                Cargo <strong>#{public.track.cargo.trackingId}</strong> is
+                currently <strong>#{public.track.cargo.statusText}</strong>
+              </p>
+
+              <p>
+                Estimated time of arrival in <strong>#{public.track.cargo.destinationName}</strong>:
+                #{public.track.cargo.eta}
+              </p>
+              <ui:fragment
+                rendered="#{not empty public.track.cargo.nextExpectedActivity}">
+                <p>#{public.track.cargo.nextExpectedActivity}</p>
+              </ui:fragment>
+
+              <p:panel rendered="#{public.track.cargo.misdirected}">
+                <p>
+                  <i class="fa fa-exclamation-triangle" style="color: #9b2332"></i>
+                  Cargo is misdirected.
+                </p>
+              </p:panel>
             </div>
-        </ui:define>
-    </ui:composition>
+          </h:panelGroup>
+
+          <p:outputLabel
+            value="Cargo with tracking ID #{public.track.trackingId} not found."
+            rendered="#{empty public.track.cargo and not empty public.track.trackingId}" />
+        </div>
+
+        <h:panelGroup rendered="#{not empty public.track.cargo}">
+          <div class="ui-g ui-g-12">
+            <div class="ui-g-3">
+              <p:outputLabel value="Handling History"
+                style="font-size: 2em; font-weight: bold" />
+            </div>
+
+            <div class="ui-g-12">
+              <p:separator />
+              <br /> <br />
+            </div>
+
+            <div class="ui-g-12">
+              <ui:repeat value="#{public.track.cargo.events}" var="leg">
+                <div>
+                  <ui:fragment rendered="#{leg.expected}">
+                                &#160;&#160;<i class="fa fa-check"
+                      style="color: green" />&#160;#{leg.description}, at #{leg.time}
+                            </ui:fragment>
+                  <ui:fragment rendered="#{!leg.expected}">
+                                &#160;&#160;<em class="fa fa-flag"
+                      style="color: #9b2332" />&#160;#{leg.description}, at #{leg.time}
+                            </ui:fragment>
+                </div>
+              </ui:repeat>
+
+              <p:outputLabel
+                value="There are no events recorded for the tracking ID #{public.track.cargo.trackingId}."
+                rendered="#{empty public.track.cargo.events}" />
+            </div>
+          </div>
+
+          <div id="map" class="ui-g-12">
+            <iframe class="mapFrame" width="100%" height="960"
+              src="#{request.contextPath}/public/mapFrame.xhtml?cargo=#{public.track.cargoAsJson}" />
+          </div>
+        </h:panelGroup>
+      </h:panelGroup>
+    </div>
+    <h:outputScript name="js/topbar.min.js" />
+    <h:outputScript name="js/topbar.js" />
+    <h:outputScript name="js/progress.js" />
+  </ui:define>
+</ui:composition>
 </html>
